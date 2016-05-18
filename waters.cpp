@@ -1,0 +1,275 @@
+//#include "Water.h"
+#include<iostream>
+#include <vector>
+#include <stack>
+#include <queue>
+#include<stdlib.h>
+#include<string>
+
+using namespace std;
+
+class Water
+{
+public:
+	Water();
+	~Water();
+};
+Water::Water()
+{
+}
+Water::~Water()
+{
+}
+
+class State {
+	//container capacities and value
+public:
+	State(){}
+	int capacity[15];
+	int value[15];
+	State *parent;
+	string move;
+};
+
+//queue for storing configurations
+static queue<State*> config;
+//for storing visited states
+vector<State*>visitedstate;
+//iterator to traverse the vector
+vector<State>::iterator i;
+
+
+bool visited(State *vtemp, int length) {
+	int count = 1;
+	//for checking each and every visited state
+	for (int i = 0; i <(int)visitedstate.size(); ++i) {
+		//chechking with the state provided
+		//State temp1 = (*i);
+		//checking the container values
+		for (int j = 0; j < length; j++) {
+			if (vtemp->value[j] != visitedstate.at(i)->value[j]) {
+				count = 1;
+				break;
+			}
+			count = j + 1;
+		}
+		if (count == length){
+			return true;
+		}
+	}
+	return false;
+}
+
+
+bool goal_check(State *gtemp, int length, int g) {
+    int i=0;
+	//flag for checking whether it is equal to goal
+	int flag = 1;
+	//litres required to be in the containers
+	int goal = g;
+	//checking with containers for goal state
+	for (i = 0; i < length; i++) {
+		//if equal to any of the container then goal reached
+		if (gtemp->value[i] == goal) {
+			flag = 0;
+			break;
+		}
+	}
+	if (flag == 1){
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+void configsolver(State *ctemp, int length) {
+	//to measure water left in the container
+	int left;
+	State *p = ctemp;
+
+    int i=0, j=0;
+	//checking the value if container is empty		
+	for (i = 0; i < length; i++) {
+		if (ctemp->value[i] == 0) {
+			//filling the container full
+			State *child = new State();
+			child->value[i] = ctemp->value[i];
+			child->capacity[i] = ctemp->capacity[i];
+			child->value[i] = child->capacity[i];
+			//pushing it into stack
+			child->parent = p;			
+			string s1 = "Please fill the container" + to_string(i);
+			child->move = s1;
+
+			//cout << p<<endl;
+			config.push(child);
+			//making the value zero for other cases
+			//ctemp.value[i] = 0;
+		}
+		else  {
+		   //condition when there is some water left in the container
+			for (j = 0; j < length; j++) {
+				State *child = new State();
+				for (i = 0; i < length; i++)
+				{
+					child->value[i] = ctemp->value[i];
+					child->capacity[i] = ctemp->capacity[i];
+				}
+				if (i != j) {					
+					
+					left = child->capacity[j] - child->value[j];
+					//when it is not full
+					if (left != 0) {
+						//left is greater than other container value
+						if (left >= child->value[i]) {
+						
+							//add the water in to that container
+							child->value[j] = child->value[j] + child->value[i];
+							child->value[i] = 0;
+							child->parent = p;
+							string s1 = "Please fill the container from  " + to_string(i) + "  to  " + to_string(j);
+							child->move = s1;
+							config.push(child);
+						}
+						else {
+							//if less than fill it till other container is full
+							
+							child->value[i] = child->value[i] - left;
+							child->value[j] = ctemp->value[j] + left;
+							child->parent = p;
+							string s1 = "Please fill the container from " + to_string(i) + " to " + to_string(j);
+							child->move = s1;
+							config.push(child);
+							
+						}
+					}
+				}
+			}
+			State *child = new State();
+			for (i = 0; i < length; i++)
+			{
+				child->value[i] = ctemp->value[i];
+				child->capacity[i] = ctemp->capacity[i];
+			}
+			
+			child->value[i] = 0;
+			child->parent = p;
+			string s1 = "Please empty the container  " + to_string(i);
+			child->move = s1;
+			config.push(child);
+			
+			//condition when the container is not full
+			if (ctemp->value[i] < ctemp->capacity[i]){
+				State *child = new State();
+				for (i = 0; i < length; i++)
+				{
+					child->value[i] = ctemp->value[i];
+					child->capacity[i] = ctemp->capacity[i];
+				}
+
+				child->value[i] = child->capacity[i];
+				string s1 = "Please fill the container " + to_string(i) + " completely";
+				child->move = s1;
+				child->parent = p;
+				config.push(child);
+				
+			}
+		}
+	}
+}
+
+int main(int argc, char* argv[]) {
+    int i;
+	//user input
+	int length = argc - 2;
+	//goal litres of water
+	int goal = atoi(argv[1]);
+	//initial conditions
+	State *temp=new State();
+	//initializing it with values
+	for (i = 0; i < length; i++) {
+		temp->capacity[i] = atoi(argv[i + 2]);
+		temp->value[i] = 0;
+	}
+	//pushing it into the configuration queue
+	temp->parent = NULL;
+	temp->move = "Initial configuartion";
+	cout << temp->move;
+	config.push(temp);
+	int flag = 1;
+	//when the queue is not empty
+	while (!config.empty()) {
+		//check whether it matches the goal
+		
+		if (goal_check(config.front(), length, goal))
+		{
+			//cout << "visited goal";
+			flag = 0;
+			break;
+		}
+		//check whether it already arrived at the state
+		if (visited(config.front(), length)) {
+			
+			//cout << "visited previously" << endl;
+			config.pop();
+		}
+		else {
+			
+			//cout << "qf: ";
+			//for (i = 0; i < length; i++) {
+				
+				//cout << config.front().value[i] << " ";
+		//	}
+			
+			//cout << &config.front().parent << " " << &config.front() << " ";
+
+			
+    	//if not visited push into visited state 
+			visitedstate.push_back(config.front());
+			//generate various configuration
+			configsolver(config.front(), length);
+			//pop it from queue
+			config.pop();
+		}
+	}
+	//if flag=0 puzzle solved       
+	if (flag == 0) {
+	
+		for (int i = 0; i < length; i++) {
+			cout << config.front()->value[i];
+		}
+		stack<State*> sol;
+		State *temp=config.front();
+		
+		temp->parent = config.front()->parent;
+		while (temp != NULL)
+		{
+			sol.push(temp);
+			temp = temp->parent;
+		}
+		while (sol.size() != 0)
+		{
+			cout << sol.top()->move << endl;
+			for (int i = 0; i < length; i++) {
+				cout <<sol.top()->value[i]<<" ";
+			}
+			cout << endl;
+			sol.pop();
+		}
+	}
+	//no solution for the puzzle
+	else {
+		cout << "no solution";
+	}
+cout<<endl;
+	return 0;
+}
+
+
+
+
+
+
+
+

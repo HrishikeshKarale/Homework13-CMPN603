@@ -1,0 +1,170 @@
+
+#include<iostream>
+#include <vector>
+#include <stack>
+#include <queue>
+#include<string>
+#include<stdio.h>
+#include<stdlib.h>
+#include <math.h> 
+#include <cmath> 
+using namespace std;
+class State {
+public:
+	State(){}
+	int time;
+	string move;
+	State *parent;
+};
+
+//queue for storing configurations
+static queue<State*> config;
+//for storing visited states
+vector<State*>visitedstate;
+
+
+//for checking the visited states 
+bool visited(State *vtemp) {
+	bool flag = false;
+	//for checking each and every visited state
+	for (int k = 0; k < (int)visitedstate.size(); ++k) {
+	//checking with the state provided
+	
+	//checking the time
+	
+		if (vtemp->time == visitedstate.at(k)->time) {
+			flag = true;
+			break;
+		}
+		else{
+			continue;
+		}
+	}
+	return flag;
+
+}
+	
+
+
+//checking the goal condition
+bool goal_check(State *gtemp, int goal) {
+	if (gtemp->time == goal){
+		return true;
+
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//generate states
+void configsolver(State *ctemp, int hshown) {
+
+	State *p = ctemp;
+	if ((ctemp->time + 1) <= hshown) {
+		ctemp->time = ctemp->time + 1;
+		State *child = new State();
+		child->time = ctemp->time;
+		child->move = "Move clockwise by 1 hour";
+		child->parent = p;
+		config.push(child);
+		ctemp->time = ctemp->time - 1;
+	}
+	else {
+		
+		State *child = new State();
+		child->time = 1;
+		child->move = "Move clockwise by 1 hour";
+		child->parent = p;
+		config.push(child);
+	
+	}
+	if ((ctemp->time - 1) > 0){
+
+		State *child1 = new State();
+		child1->time = ctemp->time - 1;
+		child1->parent = p;
+		child1->move = "Move anticlockwise by 1 hour";
+		config.push(child1);
+
+	} 
+	else {
+		State *child1 = new State();
+		child1->time = hshown;
+		child1->parent = p;
+		child1->move = "Move anticlockwise by 1 hour";
+		config.push(child1);
+
+
+
+	}
+}
+int main(int argc, char *argv[]){
+	int hshown = atoi(argv[1]);
+	int currenttime = atoi(argv[2]);
+	int truetime = atoi(argv[3]);
+	int flag = 1;
+	if (currenttime > hshown || truetime > hshown) {
+		cout << "Wrong input";
+		return 0;
+	}
+	State *temp = new State();
+	temp->move = "Initial configuration";
+	temp->time = currenttime;
+	cout <<"Current time :" <<currenttime << endl;
+	
+	int goal;
+	goal = truetime;
+	cout << "Goal :" << truetime<<endl;
+	temp->parent = NULL;
+	config.push(temp);
+	while (!config.empty()) {
+		if (goal_check(config.front(), goal)){
+			//cout << "goal configuartion" << endl;
+			flag = 0;
+			break;
+		}
+		//check whether it already arrived at the state
+		if (visited(config.front())) {
+			//cout << "visited previously" << endl;
+			config.pop();
+		}
+		else {
+			//if not visited push into visited state 
+			visitedstate.push_back(config.front());
+			//generate various configuration
+			configsolver(config.front(),hshown);
+			//pop it from queue
+			config.pop();
+		}
+	}
+
+	//if flag=0 puzzle solved       
+	if (flag == 0) {
+		//storing the solution in stack
+		stack<State*> sol;
+		State *temp = config.front();
+		temp->parent = config.front()->parent;
+		while (temp != NULL)
+		{
+			sol.push(temp);
+			temp = temp->parent;
+		}
+		while (sol.size() != 0)	{		
+					
+			cout << sol.top()->move << " :";
+		    cout << sol.top()->time << " " << endl;
+								
+			sol.pop();
+		}
+	}
+	//no solution for the puzzle
+	else {
+		cout << "no solution";
+	}
+	return 0;
+
+}
+	
+
